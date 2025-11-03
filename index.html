@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>"KEEP THINGS IN MY MIND AND DON'T GET ANOTHER WIFEY</title>
+<style>
+  body {
+    font-family: "Times New Roman", serif;
+    background-color: #fff8fa;
+    color: #2c2c2c;
+    text-align: center;
+    padding: 40px 10px;
+  }
+  h1 {
+    font-size: 1.8em;
+    margin-bottom: 20px;
+  }
+  #buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 25px;
+  }
+  button {
+    font-family: "Times New Roman", serif;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 1em;
+    transition: background 0.3s, color 0.3s;
+  }
+  button:enabled:hover {
+    background: #f3d4e3;
+    cursor: pointer;
+  }
+  button:disabled {
+    color: #999;
+  }
+  #message-box {
+    display: none;
+    background: #fff0f6;
+    padding: 20px;
+    border-radius: 15px;
+    margin: 0 auto;
+    width: min(90%, 600px);
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    white-space: pre-line;
+  }
+  #final {
+    display: none;
+    font-size: 1.8em;
+    margin-top: 30px;
+    font-weight: bold;
+  }
+  .confetti {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .kiss {
+    display: none;
+    position: fixed;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 3em;
+  }
+</style>
+</head>
+<body>
+  <h1>A 10-minute countdown before you turn 21?<br>
+  (Bkl pura padhiyo thik hai, pyaar se likha hai.)</h1>
+
+  <div id="buttons"></div>
+  <div id="message-box"></div>
+  <div id="final">Forget it, read that later.<br>HAPPY BIRTHDAY MY CUTUU BABYYY 💖</div>
+
+  <canvas class="confetti"></canvas>
+  <div class="kiss">💋</div>
+
+<script>
+/* === 10-Minute Countdown (JST target, clean + subtle) === */
+
+// your 10 messages (edit inside quotes only)
+const messages = [
+  "11:50 — I mean idk from where to start, But You Mr kartik nautiyal having you in my life just feels nothing less than a blessing THE ONE (cuz you are all i ever imagined the one to be)i mean fr bkc & now the fact that we already spend 3 summers together it feels nothing less than true soulmates. If I’ve ever been lucky in this goddamn life, it’s only when i met you",
+  "11:51 — You are my MOST ADORABLE MY BABY, I've never actually felt this loved and cared maltb kabhi kabhi tu kaise karta hai bkc bich bich mai tujhe koi aur pasand aa jati hai kya ki mai pasand aani band ho jati hun but okay I LOVE YOU SOSOSO MUCH  and i promise to treat you delicately becuz that's all you deserve. ALL THE HAPPNIESS MY BABY. I literally wanna hold you in my arms and kiss you and tell you everything will get best more than imagined and i'll be alwys here with you no matter what ",
+  "11:52 — 18 by one direction also bkc 1D is the best band PYAAR HAI MERA matlb you zyda hai, Haan to this is the song i used to listen since my teens started and always thought ki koi aaega and just fuck it and mc touchwood kartik I was 18 when i met you BEST. Hum log na dance karenge is song pe when we will meet Okay? ",
+  "11:53 — You know what If Live is a movie You are my best part, Haan reel mai dekha tha but It's true bitch. You are special to me and ik i'm not perfect by any means but i want to be perfect for you.I hope you know that everytime i tell you I LOVE YOU i mean it with my entire heart there are millions things i wish i could say to you and at this point this is probably the only way i can do I think so idk ",
+  "11:54 — Ik we haven't met yet but pta nhi yaar at some deep point of thought it feels like i have felt ik i have hugged you the kind of comfort just brings in when we are on call especailly video call (haa mujhe sharam bohot aati hai ) but still seeing your face that uplift of cheeks when you smiling your laugh your hairs you eyes your lips obviously but bkc only i can kiss them You're just the cutest to ever exist in whole damn universe .",
+  "11:55 — I still can’t believe how lucky I am.",
+  "11:56 — Keep smiling, it’s my favourite view.",
+  "11:57 — Just a few more moments till the magic hour.",
+  "11:58 — Can you feel it now? My heart’s already celebrating you.",
+  "11:59 — Hold on tight, baby. The next minute is all yours!"
+];
+
+// Japan time: 23 Nov 2025 11:50 PM → 12:00 AM (10 min)
+const TARGET_YEAR = 2025, TARGET_MONTH = 10, TARGET_DAY = 23;
+const START_H = 23, START_M = 50, MINUTES_COUNT = 10;
+
+// convert JST to local time (for both of you in diff zones)
+function jstToLocalDate(year, monthIdx, day, hour, minute) {
+  // JST = UTC +9
+  const utcMs = Date.UTC(year, monthIdx, day, hour - 9, minute);
+  return new Date(utcMs);
+}
+
+const startJST_asLocal = jstToLocalDate(TARGET_YEAR, TARGET_MONTH, TARGET_DAY, START_H, START_M);
+const finalJST_asLocal = jstToLocalDate(TARGET_YEAR, TARGET_MONTH, TARGET_DAY, START_H, START_M + MINUTES_COUNT);
+
+const buttonsDiv = document.getElementById("buttons");
+const messageBox = document.getElementById("message-box");
+const finalMsg = document.getElementById("final");
+const confettiCanvas = document.querySelector(".confetti");
+const kissDiv = document.querySelector(".kiss");
+
+const opened = Array(MINUTES_COUNT).fill(false);
+let finalShown = false;
+
+// make 10 buttons
+for (let i = 0; i < MINUTES_COUNT; i++) {
+  const btn = document.createElement("button");
+  const minute = (START_M + i) % 60;
+  const hour = START_H + Math.floor((START_M + i) / 60);
+  const label = String(hour).padStart(2,'0') + ":" + String(minute).padStart(2,'0');
+  btn.textContent = label;
+  btn.disabled = true;
+  btn.dataset.index = i;
+  btn.onclick = () => {
+    messageBox.style.display = "block";
+    messageBox.textContent = messages[i];
+    opened[i] = true;
+  };
+  buttonsDiv.appendChild(btn);
+}
+
+// unlock control
+function allOpened(){ return opened.every(v => v); }
+
+function updateUnlocks() {
+  const now = new Date();
+  const diffMs = now - startJST_asLocal;
+  const unlockedCount = Math.floor(diffMs / 60000) + 1;
+  if (unlockedCount > 0) {
+    for (let i = 0; i < Math.min(unlockedCount, MINUTES_COUNT); i++) {
+      document.querySelector(`button[data-index="${i}"]`).disabled = false;
+    }
+  }
+
+  // show final only if 12:00 JST passed and not all opened
+  if (!finalShown && now >= finalJST_asLocal) {
+    if (!allOpened()) {
+      finalMsg.style.display = "block";
+      showLightConfettiAndKiss();
+    }
+    document.querySelectorAll("button").forEach(b => b.disabled = false);
+    finalShown = true;
+  }
+}
+
+// subtle confetti + kiss
+function showLightConfettiAndKiss() {
+  const cvs = confettiCanvas;
+  cvs.width = innerWidth; cvs.height = innerHeight;
+  const ctx = cvs.getContext("2d");
+  const pieces = [];
+  const colors = ["#ffd6ea","#e6d6f5","#fbe8ff","#ffeef6","#f5d6ff"];
+  for (let i=0;i<60;i++){
+    pieces.push({
+      x: Math.random()*cvs.width,
+      y: Math.random()*-cvs.height,
+      w: 6+Math.random()*8,
+      h: 10+Math.random()*8,
+      c: colors[Math.floor(Math.random()*colors.length)],
+      vx:(Math.random()*2)-1,
+      vy:1+Math.random()*2,
+      rot:Math.random()*360
+    });
+  }
+  let run = true;
+  function frame(){
+    ctx.clearRect(0,0,cvs.width,cvs.height);
+    pieces.forEach(p=>{
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle=p.c;
+      ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      ctx.restore();
+      p.x+=p.vx; p.y+=p.vy; p.rot+=3;
+      if(p.y>cvs.height+30) p.y=-30;
+    });
+    if(run) requestAnimationFrame(frame);
+  }
+  frame();
+  cvs.style.display="block";
+  kissDiv.style.display="block";
+  setTimeout(()=>{
+    run=false;
+    ctx.clearRect(0,0,cvs.width,cvs.height);
+    cvs.style.display="none";
+    kissDiv.style.display="none";
+  },4000);
+}
+
+updateUnlocks();
+setInterval(updateUnlocks, 15000);
+window.addEventListener("resize",()=>{
+  confettiCanvas.width=innerWidth;
+  confettiCanvas.height=innerHeight;
+});
+</script>
+</body>
+</html>
